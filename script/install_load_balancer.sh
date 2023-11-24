@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Muestra todos los comandos que se han ejeutado.
-
 set -ex
 
 # Actualización de repositorios
@@ -14,7 +13,6 @@ apt update
 source .env
 
 # Instalamos el servidor Web apache
-
 apt install apache2 -y
 
 # Habilitamos los modulos para configurar Apache como proxy apache
@@ -26,7 +24,6 @@ a2enmod proxy_balancer
 a2enmod lbmethod_byrequests
 
 # Copiamos el archiv de configuracion
-
 cp ../conf/load-balancer.conf /etc/apache2/sites-available
 
 
