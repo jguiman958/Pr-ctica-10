@@ -28,7 +28,6 @@ cp ../conf/load-balancer.conf /etc/apache2/sites-available
 
 
 # Reemplazo las variables de la plantilla con las direcciones de los frontales.
-
 sed -i "s/IP_HTTP_SERVER_1/$IP_HTTP_SERVER_1/" /etc/apache2/sites-available/load-balancer.conf
 sed -i "s/IP_HTTP_SERVER_2/$IP_HTTP_SERVER_2/" /etc/apache2/sites-available/load-balancer.conf
 
