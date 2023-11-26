@@ -23,7 +23,7 @@ a2enmod proxy_balancer
 # Habilitamos el balanceo de carga round robin
 a2enmod lbmethod_byrequests
 
-# Copiamos el archiv de configuracion
+# Copiamos el archivo de configuracion
 cp ../conf/load-balancer.conf /etc/apache2/sites-available
 
 
