@@ -377,6 +377,7 @@ systemctl restart mysql
 # Creamos la base de datos para el Backend.
 
 <p>"Aquí es donde ejecutamos el script deploy_backend."</p>
+
 ```
 mysql -u root <<< "DROP DATABASE IF EXISTS $WORDPRESS_DB_NAME"
 mysql -u root <<< "CREATE DATABASE $WORDPRESS_DB_NAME"
