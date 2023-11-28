@@ -160,3 +160,238 @@ systemctl restart apache2
 ![Alt text](Capturas/Captura1.PNG)
 
 Si recargamos la pagina, en orden primero mostrará el frontend 1 y luego el frontend2.
+
+# Instalaciones previas para instalar el balanceador.
+<p>Para ello primero tenemos que tener instalado, las dos pilas lamp en sus respectivos frontend, los cuales serán el frontend 1 y frontend 2, en cada uno de los frontend debe ejecutarse el fichero install_lamp_frontend.</p>
+# Actualización de repositorios
+```
+ sudo apt update
+```
+# Actualización de paquetes
+# sudo apt upgrade  
+
+# Instalamos el servidor Web apache
+```
+apt install apache2 -y
+```
+### Con esto instalamos el servidor web apache2.
+
+### Estructura de directorios del servicio apache2.
+
+```
+ 1. Directorios
+  1.1 conf-available --> donde se aplican los hosts virtuales.
+  1.2 conf-enabled --> donde se encuentran enlaces simbolicos a los archivos de configuracion           
+  de conf-available.
+  1.3 mods-available --> para añadir funcionalidades al servidor.
+  1.4 mods-enabled --> enlaces simbolicos a esas funcionalidades.
+  1.5 sites-available --> archivos de configuración de hosts virtuales.
+  1.6 sites-enabled --> enlaces simbolicos a sites-available.
+ 2. Ficheros
+  2.1 apache2.conf --> Archivo de configuración principal.
+  2.3 envvars --> Define las variables de entorno, que se usan en el archivo principal.
+  2.3 magic --> Para determinar el tipo de contenido, por defecto es MIME.
+  2.4 ports.conf --> archivo donde se encuentran los puertos de escucha de apache.
+```
+
+### En /etc/apache2 se almacenan los archivos y directorios de apache2.
+
+## Contenido del fichero /conf/000-default.conf.
+Este archivo contiene la configuración del host virtual el cual debe contener las siguientes directivas para que funcione la aplicación web.
+
+En la ruta del repositorio ``/conf/000-default.conf``, encontramos la configuración que se emplea para este despliegue.
+
+```python
+ServerSignature Off
+ServerTokens Prod
+<VirtualHost *:80>
+    #ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html
+    DirectoryIndex index.php index.html 
+    
+    <Directory "/var/www/html/">
+        AllowOverride All
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+```
+Aquí podemos comprobar lo que contiene el fichero de configuración del ``VirtualHost``, donde todas las conexiones pasaran por el puerto 80, el ``DocumentRoot``, donde mostrará el contenido será desde ``/var/www/html`` y podemos ver los archivos de error y acceso para comprobar errores y ver quien ha accedido, Tambien, tenemos la directiva ``Directory index`` la cual establece una prioridad en el orden que se establezca.
+
+Podemos comprobar que hemos añadido ``directory`` el cual almacena las directivas asignadas al virtualhost, mas las que se encuentran en el archivo principal de apache. 
+
+La ruta donde se ejecuta el contenido que vamos a mostrar por internet y la directiva ``AllowOverride All`` mas adelante se explica el porque esto está aquí, como información puedo ofrecer que tiene que ver con el archivo ``.htaccess``.
+
+### También se hace uso de las siguientes directivas 
+``ServerSignature OFF `` --> Esto es por si nos interesa incorporar la versión de apache, en páginas de error e indice de directorios, lo dejamos en OFF por seguridad. Se debe aplicar a todo el servidor.
+
+``ServerTokens Prod `` --> Esta se puede aplicar a un único servidor virtual. Aquí se muestran información sobre las cabeceras, es decir, respuestas que se mandan al cliente, es conveniente tenerlo quitado.
+
+# Instalar php
+```
+apt install php libapache2-mod-php php-mysql -y
+```
+### Instalamos php junto con unos modulos necesarios.
+<------------------------------------------------------>
+### ``libapache2-mod-php`` --> para mostrar paginas web desde un servidor web apache y ``php-mysql``, nos permite conectar una base de datos de MySQL desde PHP.
+
+# Copiar el archivo de configuracion de apache.
+```
+cp ../conf/000-default.conf /etc/apache2/sites-available
+```
+### En este caso, no haría falta emplear el comando ``a2ensite``, ya que se habilita por defecto debido a que apache2 toma por defecto la configuración de ese archivo para desplegar las opciones que hemos hecho en la web.
+
+### Este script posee un archivo de configuración en la carpeta ``conf `` por el cual configura el host virtual que muestra el contenido de la aplicación web.
+
+```
+ServerSignature Off
+ServerTokens Prod
+<VirtualHost *:80>
+    #ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html
+    DirectoryIndex index.php index.html
+    
+    <Directory "/var/www/html/">
+        AllowOverride All
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+```
+
+# Reiniciamos el servicio apache
+```
+systemctl restart apache2
+```
+### Reiniciamos apache para que obtenga los cambios.
+
+# Copiamos el arhivo de prueba de php
+### La finalidad de esto va a ser que muestre el contenido de la página index.php la cual se inserta en la carpeta html, con objetivo de que muestre el contenido de esa página, por defecto, si vemos el archivo de configuración de 000-default.conf veremos que:
+ <p> DocumentRoot ``/var/www/html`` --> Toma como raiz, los archivos en html.</p>
+ <p> ``DirectoryIndex`` --> index.php index.html --> Muestra en orden los archivo situados.</p>    
+
+```
+cp ../php/index.php /var/www/html
+```
+### Sabiendo lo anterior copiamos el archivo index.php a ``/var/www/html``.
+
+# Modificamos el propietario y el grupo del directo /var/www/html
+```
+chown -R www-data:www-data /var/www/html
+```
+### Lo que estamos haciendo es que el usuario de apache tenga permisos de propietario sobre, el directorio html con objetivo de que pueda desplegar el **sitio web**.
+
+# Modificación del archivo index de los servidores frontend1 y frontend2.
+<p>Para ello tenemos que insertar lo siguiente para comprobar el funcionamiento del load_balancer y ver si funciona o no, esto es solo un ejemplo, de que funciona como debe.</p>
+
+Primero tenemos que borrar el que se crea con la instalación de apache2.
+```
+sudo rm -rf index.html
+```
+Para ello podemos borrar el archivo index.html que tenga por defecto apache y crear otro que incluya lo siguiente, o lo que queráis.
+```
+sudo nano /var/www/html/index.html
+```
+Dentro del archivo ponemos Frontend 1 o Frontend 2 dependiendo del frontend en el que estéis.
+
+# Instalación del Backend.
+
+### Importante
+<p>El script "deploy_backend" debe desplegarse antes del deploy_frontend ya que dara fallo al intentar instalar algo sobre una base de datos que no existe, también hay que tener en cuenta que las instalaciones van por separado, una para el backend otra para el frontend...</p>
+
+<p>Hay que tener en cuenta que no lo vamos a instalar todo en una misma máquina, vamos a trabajar con una arquitectura de dos niveles, una que se muestra a usuarios y otra por debajo (backend), definiendo una base de datos, lo cual tiene sentido, ya que ningún usuario ajeno debe acceder a la información que se aloja en dicha base de datos. Teniendo en cuenta las ips privadas de cada máquina y que para acceder a dicha base de datos se debe hacer a traves de la ip privada, si lo hacemos a traves de la pública exponemos la base de datos.</p>
+
+## Muestra todos los comandos que se han ejecutado.
+
+```
+set -ex
+```
+En caso de error para la ejecución del script.
+## Incluimos las variables del archivo .env.
+
+```
+source .env
+```
+<p>Carga las variables en el script</p>
+
+<p>Donde si incluye lo siguiente y lo que vamos a necesitar para desplegar el backend unicamente.</p>
+
+```
+WORDPRESS_DB_NAME=wordpress
+WORDPRESS_DB_USER=wp_user
+WORDPRESS_DB_PASSWORD=wp_pass
+IP_CLIENTE_MYSQL=172.31.91.83 --> Ip privada del frontend.
+WORDPRESS_DB_HOST=172.31.95.143 --> Ip privada del backend --> para que conecte desde la ip privada y no la pública, para que acceda un usuarios desde dentro de los dos niveles sin interrumpir la seguridad.
+```
+
+<p>Donde incluyen las variables con las que se van a construir la base de datos, de forma automática con las instrucciones posteriores.</p>
+
+# Instalamos mysql-server para la máquina backend.
+
+## Actualización de repositorios
+ 
+ ```
+ sudo apt update
+ ```
+Con esto actualizamos los repositorios.  
+
+## Importamos el archivo .env para incorporar las variables que necesitamos.
+
+```
+source .env
+```
+
+Incorporamos la variable que necesitamos para la instalación.
+
+```
+MYSQL_PRIVATE=172.31.95.143
+```
+
+Esta variable, incorpora la ip privada del backend, ya que poner la pública sería algo no recomendable de hacer, en la base de datos solo deben trabajar los empleados, lo usuarios que accedan al frontend no deben tener ningún conocimiento sobre el lugar donde reside la base de datos.
+
+## Instalación de mysql-server
+
+```
+sudo apt install mysql-server -y
+```
+
+Instalamos mysql-server conn el -y para que lo isntale de forma automática.
+
+## Configuración de mysql, para que solo acepte conexiones desde la ip privada.
+
+```
+sed -i "s/127.0.0.1/$MYSQL_PRIVATE/" /etc/mysql/mysql.conf.d/mysqld.cnf
+```
+
+<p>No nos interesa que mysql se conecte a si mismo, es decir que se redireccione a si mismo mediante el host local, tenemos que poner la ip privada de dicho servidor, que es donde se va a encontrar alojado el servidor de mysql.</p>
+
+## Reiniciamos el servicio.
+
+```
+systemctl restart mysql
+```
+<p>Importante reiniciar el servicio tras ese leve ajuste en el fichero de configuración de mysql.</p>
+
+# Creamos la base de datos para el Backend.
+
+<p>"Aquí es donde ejecutamos el script deploy_backend."</p>
+```
+mysql -u root <<< "DROP DATABASE IF EXISTS $WORDPRESS_DB_NAME"
+mysql -u root <<< "CREATE DATABASE $WORDPRESS_DB_NAME"
+mysql -u root <<< "DROP USER IF EXISTS $WORDPRESS_DB_USER@$IP_CLIENTE_MYSQL"
+mysql -u root <<< "CREATE USER $WORDPRESS_DB_USER@$IP_CLIENTE_MYSQL IDENTIFIED BY '$WORDPRESS_DB_PASSWORD'"
+mysql -u root <<< "GRANT ALL PRIVILEGES ON $WORDPRESS_DB_NAME.* TO $WORDPRESS_DB_USER@$IP_CLIENTE_MYSQL"
+```
+<p>Con estas instrucciones se crean la base de datos para wordpress desde la máquina backend.</p>
+
+## Reiniciamos el servicio de mysql.
+
+<p>Es necesario reiniciar el servicio para que se asimilen los cambios.</p>
+
+```
+systemctl restart mysql 
+```
+
+Y con esto, ya estaría correctamente configurado, el balanceador de carga con apache, donde previamente hemos mostrado, que ejecuta bien el proxy que actua como balanceador, mostrando el contenido de los 2 frontend mediante una serie de turnos.
