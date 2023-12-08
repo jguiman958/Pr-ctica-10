@@ -640,7 +640,7 @@ RewriteRule . /index.php [L]
 
 Así es como se ve en el archivo, el contenido de htaccess, este se crea solo allí sin que sea necesario crearlo previamente.
 
-## 4.16 Habilitamos el modulo mod_rewrite de apache.
+## Habilitamos el modulo mod_rewrite de apache.
 
 ```
 a2enmod rewrite
