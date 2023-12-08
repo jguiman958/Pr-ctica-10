@@ -397,3 +397,281 @@ systemctl restart mysql
 ```
 
 Y con esto, ya estaría correctamente configurado, el balanceador de carga con apache, donde previamente hemos mostrado, que ejecuta bien el proxy que actua como balanceador, mostrando el contenido de los 2 frontend mediante una serie de turnos.
+
+# Instalación en el frontend.
+
+## Actualización de repositorios
+
+Necesario para que a la hora de instalar software no de errores.
+
+```
+apt update
+```
+
+## Incluimos las variables del archivo .env.
+```
+source .env
+```
+Las cuales son las siguientes variables:
+
+```
+# Configuramos variables
+
+# Ips privadas de los dos frontend, conectadas mediante http al balanceador de carga.
+#-------------------------------#
+IP_HTTP_SERVER_1=172.31.95.16 #--> Frontend 1
+IP_HTTP_SERVER_2=172.31.81.15 #--> Frontend 2
+#-------------------------------#
+
+# Base de datos de wordpress.
+#-----------------------------#
+WORDPRESS_DB_NAME=wordpress
+
+WORDPRESS_DB_USER=wp_user
+
+WORDPRESS_DB_PASSWORD=wp_pass
+
+IP_CLIENTE_MYSQL=172.31.81.15 #--> Ip privada del frontend que se conecta a la base de datos
+
+WORDPRESS_DB_HOST=172.31.81.116 #--> Base de datos con el servidor de mysql.
+#-----------------------------#
+
+# Configuración post instalacion de wordpress.
+#-----------------------------#
+wordpress_title="Sitio web de IAW"
+wordpress_admin_user=admin
+wordpress_admin_pass=admin
+wordpress_admin_email=demo@demo.es
+#-----------------------------#
+
+
+# Variables para el certificado.
+#-----------------------------#
+CERTIFICATE_EMAIL=demo@demo.es
+CERTIFICATE_DOMAIN=juanjoseguirado.ddns.net
+#-----------------------------#
+
+# Ip de mysql
+#-----------------------------#
+MYSQL_PRIVATE=172.31.81.116 #--> Ip del servidor privado de mysql.
+#-----------------------------#
+
+# Actualizacion del login para ocultar el login del frontend
+#-----------------------------#
+WORDPRESS_HIDE_LOGIN=acceso
+#-----------------------------#
+```
+
+## Borramos los archivos previos.
+```
+rm -rf /tmp/wp-cli.phar
+```
+
+Borramos los archivo del directorio tmp para que no se acumulen.
+
+## Descargamos La utilidad wp-cli
+
+```
+wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -P /tmp
+```
+Necesaria para instalar wordpress por comandos.
+
+## Asignamos permisos de ejecución al archivo wp-cli.phar
+
+```
+chmod +x /tmp/wp-cli.phar
+```
+Damos permisos de ejecución a fichero, para poder ejecutarlo como un comando proximamente. 
+
+## Movemos los el fichero wp-cli.phar a bin para incluirlo en la lista de comandos.
+
+```
+mv /tmp/wp-cli.phar /usr/local/bin/wp
+```
+
+Mandamos wp a bin para que se pueda ejecutar como un comando.
+
+## Eliminamos instalaciones previas de wordpress
+
+```
+rm -rf /var/www/html/*
+```
+Borramos todo del directorio que muestra el contenido de la aplicación web. 
+
+## Descargarmos el codigo fuente de wordpress en /var/www/html
+
+```
+wp core download --path=/var/www/html --locale=es_ES --allow-root
+```
+Descargamos el codigo fuente de wordpres.
+
+## Creación del archivo wp-config 
+
+```
+wp config create \
+  --dbname=$WORDPRESS_DB_NAME \
+  --dbuser=$WORDPRESS_DB_USER \
+  --dbpass=$WORDPRESS_DB_PASSWORD \
+  --dbhost=$WORDPRESS_DB_HOST \
+  --path=/var/www/html \
+  --allow-root
+```
+Creamos el archivo vp config con los datos necesarios de la base de datos.
+
+```
+WORDPRESS_DB_NAME=wordpress
+
+WORDPRESS_DB_USER=wp_user
+
+WORDPRESS_DB_PASSWORD=wp_pass
+
+WORDPRESS_DB_HOST=172.31.81.116 #--> Base de datos con el servidor de mysql.
+```
+
+Contiene la forma de poder acceder a la base de datos.
+
+## Instalar wordpress.
+
+```
+wp core install \
+  --url=$CERTIFICATE_DOMAIN \
+  --title="$wordpress_title" \
+  --admin_user=$wordpress_admin_user \
+  --admin_password=$wordpress_admin_pass \
+  --admin_email=$wordpress_admin_email \
+  --path=/var/www/html \
+  --allow-root
+```
+
+Seguidamente, instalamos wordpress declarando la ruta donde se encuentra wordpress y permitiendo el acceso al root para poder instalarlo.
+
+Dando como información las siguientes variables, para que la instalación se haga de forma automática.
+
+```
+wordpress_title="Sitio web de IAW"
+wordpress_admin_user=admin
+wordpress_admin_pass=admin
+wordpress_admin_email=demo@demo.es
+CERTIFICATE_DOMAIN=juanjoseguirado.ddns.net
+```
+Tomando como ruta url, el dominio creado con no ip.
+
+## Actualizamos el core
+
+```
+wp core update --path=/var/www/html --allow-root
+```
+Actualizamos el core de wordpress.
+
+## Instalamos un tema:
+
+```
+wp theme install sydney --activate --path=/var/www/html --allow-root
+```
+
+Instalamos un tema en wordpress.
+
+## Instalamos el plugin bbpress:
+
+```
+wp plugin install bbpress --activate --path=/var/www/html --allow-root
+```
+
+Instalamos un plugin en wordpress.
+
+## Configuramos la variables https = on.
+
+```
+sed -i "/COLLATE/a \$_SERVER['HTTPS'] = 'on';" /var/www/html/wp-config.php
+```
+
+Habilitamos https en wp-config para que cargue el contenido con http de forma segura, ya que si no cambiamos la opción a on no mostrará el contenido como debe ya que lo carga con http en vez de https en el navegador.
+
+## Instalamos el plugin para ocultar wp-admin
+
+```
+wp plugin install wps-hide-login --activate --path=/var/www/html --allow-root
+```
+
+Importante para mejorar la seguridad de wordpress y ocultar el login.
+
+## Habilitar permalinks
+
+ ```
+ wp rewrite structure '/%postname%/' \
+  --path=/var/www/html \
+  --allow-root
+```
+
+Con esto realizamos un rewrite, ya que es necesario que para que las paginas ganen cierta fama para google, con objetivo de mejorar el seo, añadimos esto para que en las url aparezcan nombres en vez de parametros inconclusos.
+
+## Modificamos automaticamente el nombre que establece por defecto el plugin wpd-hide-login
+
+```
+wp option update whl_page $WORDPRESS_HIDE_LOGIN --path=/var/www/html --allow-root
+```
+
+Cambiamos el nombre del login por defecto de wordpress al declarado en la variables...
+
+```
+WORDPRESS_HIDE_LOGIN=acceso
+```
+
+## 4.16 Creamos el archivo htaccess en /var/www/html
+
+```
+cp ../conf/.htaccess /var/www/html
+```
+
+El cual dicho archivo contiene lo siguiente, con algunas explicaciones.
+
+```
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On Habilita el motor de reescritura.
+RewriteBase / Define la ruta para la reescritura.
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress
+```
+
+Así es como se ve en el archivo, el contenido de htaccess, este se crea solo allí sin que sea necesario crearlo previamente.
+
+## 4.16 Habilitamos el modulo mod_rewrite de apache.
+
+```
+a2enmod rewrite
+```
+
+<p>Habilitamos el módulo rewrite, para que htaccess tome acción aquí y funcione según la condición, ya que en el archivo que estamos trabajando:</p>
+
+```
+ServerSignature Off
+ServerTokens Prod
+<VirtualHost *:80>
+    #ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html
+    DirectoryIndex index.php index.html
+
+    <Directory "/var/www/html/">
+        AllowOverride All
+    </Directory>
+    
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+```
+
+Tenemos esta directiva AllowOverride All la cual permite que htaccess pueda funcionar.
+
+
+## Cambiamos al propietario de /var/www/html como www-data
+
+```
+chown -R www-data:www-data /var/www/html
+```
+
+Y damos permiso al usuario www-data de apache al directorio html.
