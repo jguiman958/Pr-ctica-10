@@ -62,6 +62,9 @@ wp theme install sydney --activate --path=/var/www/html --allow-root
 
 wp plugin install bbpress --activate --path=/var/www/html --allow-root
 
+# Configuramos la variables https = on.
+sed -i "/COLLATE/a \$_SERVER['HTTPS'] = 'on';" /var/www/html/wp-config.php
+
 # Instalamos el plugin para ocultar wp-admin
 wp plugin install wps-hide-login --activate --path=/var/www/html --allow-root
 
@@ -74,7 +77,7 @@ wp plugin install wps-hide-login --activate --path=/var/www/html --allow-root
 wp option update whl_page $WORDPRESS_HIDE_LOGIN --path=/var/www/html --allow-root
 
 
-# Hbailitamos la modalidad de reescritura.
+# Habilitamos la modalidad de reescritura.
 a2enmod rewrite
 
 # Htacces en html
