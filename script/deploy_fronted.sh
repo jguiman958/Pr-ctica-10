@@ -77,5 +77,8 @@ wp option update whl_page $WORDPRESS_HIDE_LOGIN --path=/var/www/html --allow-roo
 # Hbailitamos la modalidad de reescritura.
 a2enmod rewrite
 
+# Htacces en html
+cp ../conf/.htaccess /var/www/html/
+
 # Cambiamos al propietario de /var/www/html como www-data
 chown -R www-data:www-data /var/www/html
