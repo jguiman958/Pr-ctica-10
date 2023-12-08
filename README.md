@@ -617,7 +617,7 @@ Cambiamos el nombre del login por defecto de wordpress al declarado en la variab
 WORDPRESS_HIDE_LOGIN=acceso
 ```
 
-## 4.16 Creamos el archivo htaccess en /var/www/html
+## Creamos el archivo htaccess en /var/www/html
 
 ```
 cp ../conf/.htaccess /var/www/html
