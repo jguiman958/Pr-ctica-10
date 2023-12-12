@@ -161,12 +161,14 @@ systemctl restart apache2
 
 Si recargamos la pagina, en orden primero mostrará el frontend 1 y luego el frontend2.
 
-# Instalaciones previas para instalar el balanceador.
+# Instalaciones previas tras instalar el balanceador.
 <p>Para ello primero tenemos que tener instalado, las dos pilas lamp en sus respectivos frontend, los cuales serán el frontend 1 y frontend 2, en cada uno de los frontend debe ejecutarse el fichero install_lamp_frontend.</p>
 # Actualización de repositorios
+
 ```
  sudo apt update
 ```
+
 # Actualización de paquetes
 # sudo apt upgrade  
 
